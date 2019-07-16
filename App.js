@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Button, Image } from 'react-native';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -10,7 +10,10 @@ export default class App extends React.Component {
       succsess: false,
       deckID: null,
       drawnCard: null,
-      cardsRemaining: null
+      drawnCardValue:null,
+      cardsRemaining: null,
+      cardImg: null,
+      cardValue: null,
     };
 
     this.drawCardAsync = this.drawCardAsync.bind(this);
@@ -18,6 +21,21 @@ export default class App extends React.Component {
 
   componentDidMount() {
     this.getDecksFromApiAsync();
+  }
+  componentWillUpdate(nextProps, nextState) {
+    const cardValue = this.state.cardValue
+    console.log(nextState.cardValue); //will show the new state
+    console.log(this.state.cardValue); //will show the previous state
+
+    if(cardValue === null){
+      return;
+    } else {
+      if(cardValue > nextState.cardValue) {
+        console.log('Next card had a higher value')
+      } else {
+        console.log('Next card had a lower value')
+      }
+    }
   }
 
   getDecksFromApiAsync() {
@@ -43,7 +61,10 @@ export default class App extends React.Component {
     .then((responseJson) => {
       this.setState({
         drawnCard: responseJson,
-        cardsRemaining: responseJson.remaining
+        drawnCardValue: responseJson.cards[0].value,
+        cardsRemaining: responseJson.remaining,
+        cardImg: responseJson.cards[0].image,
+        cardValue: responseJson.cards[0].value
       });
       //console.log(this.state.deckID)
     })
@@ -51,24 +72,41 @@ export default class App extends React.Component {
       console.log(error)
     });
   }
+
   
   render() {
 
     const data = this.state.dataSource;
     const cardsRemaining = this.state.cardsRemaining;
+    const cardImg = this.state.cardImg;
+    const cardImgPlaceholder = 'https://previews.123rf.com/images/rlmf/rlmf1512/rlmf151200181/49319355-playing-cards-back.jpg';
 
   return (
     <View style={styles.container}>
       <View>
           <Text>Remaining cards: {cardsRemaining ? cardsRemaining : 52}</Text>
       </View>
-      <TouchableOpacity onPress={() => {console.log(this.state.drawnCard)}}>
-        <Text>SHOW CARD</Text>
+
+      <View>
+        <Image 
+        style={{width: 100, height: 200, resizeMode: 'contain'}}
+        source={{ uri : cardImg ? cardImg : cardImgPlaceholder }}/>
+      </View>
+
+
+      <TouchableOpacity style={{backgroundColor:'red', width:'100%', alignItems:'center', height: 70, justifyContent:'center'}} onPress={this.drawCardAsync}>
+        <Text style={{fontSize: 25, color:'white'}}>DRAW CARD</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={this.drawCardAsync}>
-        <Text>DRAW CARD</Text>
+      <TouchableOpacity style={{backgroundColor:'blue', width:'100%', alignItems:'center', height: 70, justifyContent:'center'}} onPress={() => {console.log(this.state.drawnCard)}}>
+        <Text style={{fontSize: 25, color:'white'}}>SHOW CARD</Text>
       </TouchableOpacity>
+
+
+      <View style={{flexDirection:'row'}}>
+      <Button title={"HIGHER"} />
+      <Button title={"LOWER"} />
+      </View>
     </View>
   );
   }
@@ -80,6 +118,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent:'center'
   },
 });
