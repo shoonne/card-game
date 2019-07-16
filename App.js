@@ -1,12 +1,16 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Button, Image } from 'react-native';
 
+import CardImage from './src/components/CardImage'
+import ScoreBoard from './src/components/ScoreBoard';
+
 export default class App extends React.Component {
   constructor(props) {
     super(props)
   
     this.state = {
       dataSource: [],
+      score: 0,
       succsess: false,
       deckID: null,
       drawnCard: null,
@@ -14,26 +18,38 @@ export default class App extends React.Component {
       cardsRemaining: null,
       cardImg: null,
       cardValue: null,
+      isCardValueHigher: false,
     };
 
     this.drawCardAsync = this.drawCardAsync.bind(this);
+    this.onPressHigher = this.onPressHigher.bind(this);
+    this.onPressLower = this.onPressLower.bind(this);
   };
 
   componentDidMount() {
     this.getDecksFromApiAsync();
   }
   componentWillUpdate(nextProps, nextState) {
-    const cardValue = this.state.cardValue
-    console.log(nextState.cardValue); //will show the new state
-    console.log(this.state.cardValue); //will show the previous state
+    const cardValue = this.state.cardValue;
+    const cardValueIsHigher = this.state.isCardValueHigher;
+    // console.log(nextState.cardValue); //will show the new state
+    // console.log(this.state.cardValue); //will show the previous state
 
     if(cardValue === null){
       return;
     } else {
-      if(cardValue > nextState.cardValue) {
-        console.log('Next card had a higher value')
-      } else {
-        console.log('Next card had a lower value')
+      if(cardValue > nextState.cardValue && cardValueIsHigher) {
+        //console.log('Next card had a higher value')
+        this.setState({
+          score: this.state.score + 1,
+          isCardValueHigher: null,
+        })
+      } else if( cardValue < nextState.cardValue && cardValueIsHigher === false) {
+        //console.log('Next card had a lower value')
+        this.setState({
+          score: this.state.score + 1,
+          isCardValueHigher: null,
+        })
       }
     }
   }
@@ -51,6 +67,20 @@ export default class App extends React.Component {
       .catch((error) => {
         console.error(error);
       });
+  }
+
+  onPressHigher = () => {
+    this.setState({
+      isCardValueHigher: true,
+    })
+    //console.log(this.state.isCardValueHigher)
+  }
+
+  onPressLower = () => {
+    this.setState({
+      isCardValueHigher: false, 
+    })
+    //console.log(this.state.isCardValueHigher)
   }
 
   drawCardAsync = () => {
@@ -75,38 +105,25 @@ export default class App extends React.Component {
 
   
   render() {
-
-    const data = this.state.dataSource;
-    const cardsRemaining = this.state.cardsRemaining;
     const cardImg = this.state.cardImg;
-    const cardImgPlaceholder = 'https://previews.123rf.com/images/rlmf/rlmf1512/rlmf151200181/49319355-playing-cards-back.jpg';
 
   return (
     <View style={styles.container}>
-      <View>
-          <Text>Remaining cards: {cardsRemaining ? cardsRemaining : 52}</Text>
-      </View>
 
-      <View>
-        <Image 
-        style={{width: 100, height: 200, resizeMode: 'contain'}}
-        source={{ uri : cardImg ? cardImg : cardImgPlaceholder }}/>
-      </View>
+    <ScoreBoard cardsRemaining={this.state.cardsRemaining} score={this.state.score}/>
+    <View>
+       <CardImage cardImg={cardImg}/>
+    </View>
 
+    <TouchableOpacity style={styles.btn} onPress={this.drawCardAsync}>
+      <Text style={{fontSize: 25, color:'white'}}>SHOW CARD</Text>
+    </TouchableOpacity>
 
-      <TouchableOpacity style={{backgroundColor:'red', width:'100%', alignItems:'center', height: 70, justifyContent:'center'}} onPress={this.drawCardAsync}>
-        <Text style={{fontSize: 25, color:'white'}}>DRAW CARD</Text>
-      </TouchableOpacity>
+    <View style={{flexDirection:'row'}}>
+      <Button onPress={this.onPressHigher} title={"HIGHER"} />
+      <Button onPress={this.onPressLower} title={"LOWER"} />
+    </View>
 
-      <TouchableOpacity style={{backgroundColor:'blue', width:'100%', alignItems:'center', height: 70, justifyContent:'center'}} onPress={() => {console.log(this.state.drawnCard)}}>
-        <Text style={{fontSize: 25, color:'white'}}>SHOW CARD</Text>
-      </TouchableOpacity>
-
-
-      <View style={{flexDirection:'row'}}>
-      <Button title={"HIGHER"} />
-      <Button title={"LOWER"} />
-      </View>
     </View>
   );
   }
@@ -120,4 +137,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent:'center'
   },
+  btn: {
+    backgroundColor:'blue', 
+    width:'100%', 
+    alignItems:'center', 
+    height: 70, 
+    justifyContent:'center'
+  }
 });
